@@ -1,95 +1,45 @@
-version: '3.7'
+version: '3.8'
 
 services:
-  openssl:
-    image: cyberark/conjur
-    container_name: openssl
-    entrypoint:
-      - openssl
-      - req
-      - -newkey
-      - rsa:2048
-      - -days
-      - "365"
-      - -nodes
-      - -x509
-      - -config
-      - /tmp/conf/tls.conf
-      - -extensions
-      - v3_ca
-      - -keyout
-      - /tmp/conf/nginx.key
-      - -out
-      - /tmp/conf/nginx.crt
-    volumes:
-      - ./conf/tls/:/tmp/conf
-
-  bot_app:
-    image: cfmanteiga/alpine-bash-curl-jq
-    container_name: bot_app
-    privileged: true
-    command: tail -F anything
-    volumes:
-      - ./program.sh:/tmp/program.sh
-    restart: on-failure
-
   database:
     image: postgres:15
-    container_name: postgres_database
+    container_name: conjur_db
     environment:
-      POSTGRES_HOST_AUTH_METHOD: password
-      POSTGRES_PASSWORD: SuperSecretPg
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
-      - "8432:5432"
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: user@domain.com
-      PGADMIN_DEFAULT_PASSWORD: SuperSecret
-    ports:
-      - "8081:80"
+      - "5432:5432"
 
   conjur:
     image: cyberark/conjur
-    container_name: conjur_server
+    container_name: conjur
     command: server
     environment:
-      DATABASE_URL: postgres://postgres:SuperSecretPg@database/postgres
-      CONJUR_DATA_KEY: "otwI/8ZXGF19jRI31H2L9LaS1McweFxtOHXL/vVioHE="
+      DATABASE_URL: postgres://postgres@database/postgres
+      CONJUR_DATA_KEY: "W0/nuw9tLUbCL3dOfh6JK3KzYRzUpNEKMQgZBxeGKkE="
       CONJUR_AUTHENTICATORS: authn
       CONJUR_TELEMETRY_ENABLED: 'false'
     depends_on:
       - database
-    restart: on-failure
     ports:
-      - "8080:80"
+      - "3000:80"
     volumes:
-      - conjur-data:/var/conjur/data
-
-  proxy:
-    image: nginx:latest
-    container_name: nginx_proxy
-    ports:
-      - "8443:443"
-    volumes:
-      - ./conf/:/etc/nginx/conf.d/:ro
-      - ./conf/tls/:/etc/nginx/tls/:ro
-    depends_on:
-      - conjur
-      - openssl
-    restart: on-failure
+      - conjur_data:/var/conjur/data
 
   client:
     image: cyberark/conjur-cli:8
     container_name: conjur_client
     depends_on:
-      - proxy
-    entrypoint: sleep
-    command: infinity
+      - conjur
+    environment:
+      CONJUR_APPLIANCE_URL: http://conjur:80
+      CONJUR_ACCOUNT: demo
+    command: sleep infinity
     volumes:
-      - ./conf/policy:/policy
+      - ./policies:/policies
 
 volumes:
-  conjur-data:
+  postgres_data:
+  conjur_data:
