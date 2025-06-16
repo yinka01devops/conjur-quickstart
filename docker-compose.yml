@@ -49,20 +49,22 @@ services:
     ports:
       - "8081:80"
 
-  conjur:
+   conjur:
     image: cyberark/conjur
     container_name: conjur_server
     command: server
     environment:
       DATABASE_URL: postgres://postgres:SuperSecretPg@database/postgres
-      CONJUR_DATA_KEY:otwI/8ZXGF19jRI31H2L9LaS1McweFxtOHXL/vVioHE=
-      CONJUR_AUTHENTICATORS:
+      CONJUR_DATA_KEY: "otwI/8ZXGF19jRI31H2L9LaS1McweFxtOHXL/vVioHE="
+      CONJUR_AUTHENTICATORS: authn
       CONJUR_TELEMETRY_ENABLED: 'false'
     depends_on:
-    - database
+      - database
     restart: on-failure
     ports:
       - "8080:80"
+    volumes:
+      - conjur-data:/var/conjur/data
 
   proxy:
     image: nginx:latest
