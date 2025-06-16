@@ -55,7 +55,7 @@ services:
     command: server
     environment:
       DATABASE_URL: postgres://postgres:SuperSecretPg@database/postgres
-      CONJUR_DATA_KEY:
+      CONJUR_DATA_KEY:otwI/8ZXGF19jRI31H2L9LaS1McweFxtOHXL/vVioHE=
       CONJUR_AUTHENTICATORS:
       CONJUR_TELEMETRY_ENABLED: 'false'
     depends_on:
