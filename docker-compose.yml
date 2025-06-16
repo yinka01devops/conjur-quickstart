@@ -26,11 +26,11 @@ services:
 
   bot_app:
     image: cfmanteiga/alpine-bash-curl-jq
-    privileged: true
     container_name: bot_app
+    privileged: true
     command: tail -F anything
     volumes:
-    - ./program.sh:/tmp/program.sh
+      - ./program.sh:/tmp/program.sh
     restart: on-failure
 
   database:
@@ -43,15 +43,15 @@ services:
       - "8432:5432"
 
   pgadmin:
-#    https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
     image: dpage/pgadmin4
+    container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: user@domain.com
       PGADMIN_DEFAULT_PASSWORD: SuperSecret
     ports:
       - "8081:80"
 
-   conjur:
+  conjur:
     image: cyberark/conjur
     container_name: conjur_server
     command: server
@@ -77,15 +77,19 @@ services:
       - ./conf/:/etc/nginx/conf.d/:ro
       - ./conf/tls/:/etc/nginx/tls/:ro
     depends_on:
-    - conjur
-    - openssl
+      - conjur
+      - openssl
     restart: on-failure
 
   client:
     image: cyberark/conjur-cli:8
     container_name: conjur_client
-    depends_on: [ proxy ]
+    depends_on:
+      - proxy
     entrypoint: sleep
     command: infinity
     volumes:
-    - ./conf/policy:/policy
+      - ./conf/policy:/policy
+
+volumes:
+  conjur-data:
